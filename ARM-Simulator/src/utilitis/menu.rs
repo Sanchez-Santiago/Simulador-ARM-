@@ -1,4 +1,5 @@
-use std::io::{self, Write}; // Importar Write para poder usar flush
+use std::io::{self, Write};
+use super::{instruccion, leds, placa_arm::PlacaARM}; // Importar PlacaARM
 
 pub struct Menu {}
 
@@ -7,12 +8,14 @@ impl Menu {
         Menu {} // Constructor para la estructura Menu
     }
 
-    pub fn mostrar(&self, contenido: &str) -> io::Result<()> {
+    pub fn mostrar(&self, placa: &mut PlacaARM) -> io::Result<()> {
         // Leer la elección del usuario
         let stdin = io::stdin();
+        let leds = leds::Leds::new();
+        let instru = instruccion::Instrucciones::new();
 
         loop {
-            println!("###### Menú ######");
+            println!("\n###### Menú ######");
             println!("1. Leer archivo");
             println!("2. Escribir archivo");
             println!("3. Buscar palabra");
@@ -35,7 +38,7 @@ impl Menu {
                     match opcion {
                         1 => {
                             println!("Leyendo archivo...");
-                            println!("{}", contenido);
+                            println!("");
                         }
                         2 => {
                             println!("Escribiendo archivo...");
