@@ -10,7 +10,7 @@ impl Leds {
     // Método mostrar que recibe una referencia a PlacaARM
     pub fn mostrar(&self, placa: &PlacaARM) {
         // Muestra el estado de los LEDs usando el estado de la placa
-        for i in 0..placa.ledsP.len() {
+        for i in 0..placa.get_cantidad_leds() {
             let estado = placa.get_led(i).unwrap_or(false); // Obtiene el estado del LED
             print!("({})", if estado { "o" } else { "-" });
         }
