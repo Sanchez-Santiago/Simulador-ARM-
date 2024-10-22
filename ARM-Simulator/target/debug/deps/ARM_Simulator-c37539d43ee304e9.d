@@ -1,12 +1,15 @@
-/home/santiago/Documentos/Dev/Practica Rust/Simulador-ARM-/ARM-Simulator/target/debug/deps/libARM_Simulator-c37539d43ee304e9.rmeta: src/main.rs src/utilitis/mod.rs src/utilitis/archivo.rs src/utilitis/menu.rs src/utilitis/leds.rs src/utilitis/placa_arm.rs src/utilitis/instruccion.rs src/utilitis/operaciones.rs
+/home/santiago/Documentos/Dev/Practica Rust/Simulador-ARM-/ARM-Simulator/target/debug/deps/libARM_Simulator-c37539d43ee304e9.rmeta: src/main.rs src/utilitis/mod.rs src/utilitis/menu.rs src/utilitis/archivos/mod.rs src/utilitis/archivos/archivo.rs src/utilitis/traduccion/mod.rs src/utilitis/traduccion/operaciones.rs src/utilitis/traduccion/instruccionHex.rs src/utilitis/hardware/mod.rs src/utilitis/hardware/placa_arm.rs src/utilitis/hardware/leds.rs
 
-/home/santiago/Documentos/Dev/Practica Rust/Simulador-ARM-/ARM-Simulator/target/debug/deps/ARM_Simulator-c37539d43ee304e9.d: src/main.rs src/utilitis/mod.rs src/utilitis/archivo.rs src/utilitis/menu.rs src/utilitis/leds.rs src/utilitis/placa_arm.rs src/utilitis/instruccion.rs src/utilitis/operaciones.rs
+/home/santiago/Documentos/Dev/Practica Rust/Simulador-ARM-/ARM-Simulator/target/debug/deps/ARM_Simulator-c37539d43ee304e9.d: src/main.rs src/utilitis/mod.rs src/utilitis/menu.rs src/utilitis/archivos/mod.rs src/utilitis/archivos/archivo.rs src/utilitis/traduccion/mod.rs src/utilitis/traduccion/operaciones.rs src/utilitis/traduccion/instruccionHex.rs src/utilitis/hardware/mod.rs src/utilitis/hardware/placa_arm.rs src/utilitis/hardware/leds.rs
 
 src/main.rs:
 src/utilitis/mod.rs:
-src/utilitis/archivo.rs:
 src/utilitis/menu.rs:
-src/utilitis/leds.rs:
-src/utilitis/placa_arm.rs:
-src/utilitis/instruccion.rs:
-src/utilitis/operaciones.rs:
+src/utilitis/archivos/mod.rs:
+src/utilitis/archivos/archivo.rs:
+src/utilitis/traduccion/mod.rs:
+src/utilitis/traduccion/operaciones.rs:
+src/utilitis/traduccion/instruccionHex.rs:
+src/utilitis/hardware/mod.rs:
+src/utilitis/hardware/placa_arm.rs:
+src/utilitis/hardware/leds.rs:
