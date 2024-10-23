@@ -9,7 +9,7 @@ pub struct PlacaARM {
     keys: [bool; 4],    // Array de 4 teclas booleanas
     buttons: [bool; 2], // Array de 2 botones booleanos
     ledsP: [bool; 8],   // Array de 8 LEDs booleanos
-    bits: [i16; 16],    // Array de 16 enteros
+    bits: [i32; 16],    // Array de 16 enteros
     flag: [bool; 4],    // Array de 4 banderas
 }
 
@@ -41,7 +41,7 @@ impl PlacaARM {
     }
 
     // Métodos para obtener y establecer números
-    pub fn get_number(&self, index: usize) -> Option<i16> {
+    pub fn get_number(&self, index: usize) -> Option<i32> {
         if index < self.bits.len() {
             Some(self.bits[index])
         } else {
@@ -49,14 +49,14 @@ impl PlacaARM {
         }
     }
 
-    pub fn set_number(&mut self, index: usize, value: i16) {
+    pub fn set_number(&mut self, index: usize, value: i32) {
         if index < self.bits.len() {
             self.bits[index] = value;
         }
     }
 
     // Método para almacenar un valor en una dirección de memoria
-    pub fn store(&mut self, value: i16, address: usize) {
+    pub fn store(&mut self, value: i32, address: usize) {
         if address < self.bits.len() {
             self.bits[address] = value; // Almacena el valor en la dirección
         } else {
