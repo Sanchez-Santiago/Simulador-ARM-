@@ -3,4 +3,5 @@ pub mod menu; // Importar el módulo menu
 pub mod archivos;
 pub mod traduccion;
 pub mod hardware;
+pub mod gtk;
 

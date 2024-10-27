@@ -1,4 +1,4 @@
 // src/utilitis/traduccion
 pub mod operaciones;
 pub mod traductor;
-pub mod binariToOperaciones;
+pub mod instrucciones_binarias;

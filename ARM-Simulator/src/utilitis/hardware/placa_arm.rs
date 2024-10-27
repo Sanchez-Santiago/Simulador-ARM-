@@ -100,4 +100,22 @@ impl PlacaARM {
             self.ledsP[index] = value;
         }
     }
+
+ // Método para obtener un valor de la memoria
+    pub fn get_memory(&self, address: usize) -> Option<i32> {
+        if address < self.bits.len() {
+            Some(self.bits[address]) // Devuelve el valor en la dirección especificada
+        } else {
+            None // Retorna None si la dirección está fuera de rango
+        }
+    }
+
+    // Método para establecer un valor en la memoria
+    pub fn set_memory(&mut self, address: usize, value: i32) {
+        if address < self.bits.len() {
+            self.bits[address] = value; // Almacena el valor en la dirección especificada
+        } else {
+            println!("Error: dirección de memoria fuera de rango {}", address);
+        }
+    }
 }
