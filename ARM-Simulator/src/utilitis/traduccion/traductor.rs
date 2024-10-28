@@ -1,5 +1,7 @@
 use crate::utilitis::{archivos::archivo::Archivo, hardware::placa_arm::PlacaARM, traduccion::operaciones::Operacion};
 
+use super::instrucciones_binarias;
+
 
 pub struct Traductor {}
 
@@ -10,24 +12,24 @@ impl Traductor {
 
     pub fn convertir(&self) {
         let archivo = Archivo::new("./src/utilitis/archivos/imem_io.dat");
-        
-        let mut operacion = Operacion::new(); // Supongamos que Operacion tiene un método `new()`
-        let mut placa = PlacaARM::new(); // Supongamos que PlacaARM también tiene un método `new()`
-        
-        let instrucciones_h = archivo
-            .lectura_instrucciones()
-            .expect("Error al leer instrucciones"); // Obtener las instrucciones
+        let mut placa = PlacaARM::new();
+        let instrucciones_bina = instrucciones_binarias::InstruccionBinaria::new();
 
-        // Procesar cada instrucción en formato hexadecimal
-        for instruccion in instrucciones_h {
-            // Convierte cada instrucción de Vec<char> a String
-            let hex_string: String = instruccion.iter().collect();
-            // Convierte la cadena hexadecimal a una representación binaria
+        let instrucciones_hex = archivo
+            .lectura_instrucciones()
+            .expect("Error al leer instrucciones");
+
+        for instruccion_hex in instrucciones_hex {
+            let hex_string: String = instruccion_hex.iter().collect();
             let binario_str = self.hex_string_to_binary(&hex_string);
-            // Separa la cadena binaria en un vector de i32
             let bits = self.separar_binario_en_vector(&binario_str);
 
-            // Llama a llmado con el vector de bits
+            instrucciones_bina.llamado(&bits, &mut placa);
+            if let Some(pc) = placa.get_register(15) {
+                if pc >= instrucciones_hex.len() as u32 {
+                    break;
+                }
+            }
         }
     }
 

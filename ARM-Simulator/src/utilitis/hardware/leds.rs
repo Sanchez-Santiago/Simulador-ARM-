@@ -4,25 +4,30 @@ pub struct Leds {}
 
 impl Leds {
     pub fn new() -> Self {
-        Leds {} // Constructor de Leds sin necesidad de placa
+        Leds {}
     }
 
-    // Método mostrar que recibe una referencia a PlacaARM
     pub fn mostrar(&self, placa: &PlacaARM) {
-        // Muestra el estado de los LEDs usando el estado de la placa
         for i in 0..placa.get_cantidad_leds() {
-            let estado = placa.get_led(i).unwrap_or(false); // Obtiene el estado del LED
+            let estado = placa.get_led(i).unwrap_or(false);
             print!("({})", if estado { "o" } else { "-" });
         }
-        println!(); // Nueva línea después de mostrar el estado de los LEDs
+        println!();
     }
 
-    // Métodos para encender y apagar LEDs
     pub fn encender(&mut self, placa: &mut PlacaARM, indice: usize) {
-        placa.set_led(indice, true); // Enciende el LED en el índice dado
+        if indice < placa.get_cantidad_leds() {
+            placa.set_led(indice, true);
+        } else {
+            eprintln!("Índice fuera de rango: {}", indice);
+        }
     }
 
     pub fn apagar(&mut self, placa: &mut PlacaARM, indice: usize) {
-        placa.set_led(indice, false); // Apaga el LED en el índice dado
+        if indice < placa.get_cantidad_leds() {
+            placa.set_led(indice, false);
+        } else {
+            eprintln!("Índice fuera de rango: {}", indice);
+        }
     }
 }
