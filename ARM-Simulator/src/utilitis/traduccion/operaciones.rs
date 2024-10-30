@@ -304,14 +304,11 @@ impl Operacion {
         let pc = pc_actual.wrapping_add(operand2); // Aquí, operand2 ya es i32
         placa.set_register(15, pc); // Establecer el nuevo valor de PC
 
-        println!("Branch and Link a la dirección: {}", pc);
     }
 
     pub fn b(&self, placa: &mut PlacaARM, offset: i32) {
-        if placa.get_flag(1).unwrap_or(false) { // Bandera Z
             let pc = placa.get_register(15).unwrap_or(0);
-            placa.set_register(15, pc + offset); // Ajustar PC con el offset
-        }
+            placa.set_register(15, offset); // Ajustar PC con el offset
     }
 
     pub fn str(&mut self, rd: usize, rn: usize, operand2: i32, placa: &mut PlacaARM) {

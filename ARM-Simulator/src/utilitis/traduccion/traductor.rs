@@ -1,7 +1,6 @@
-use crate::utilitis::{archivos::archivo::Archivo, hardware::placa_arm::PlacaARM, traduccion::operaciones::Operacion};
-
+use crate::utilitis::{archivos::archivo::Archivo, hardware::placa_arm::PlacaARM};
 use super::instrucciones_binarias;
-
+use std::convert::TryInto;
 
 pub struct Traductor {}
 
@@ -11,52 +10,56 @@ impl Traductor {
     }
 
     pub fn convertir(&self) {
-        let archivo = Archivo::new("./src/utilitis/archivos/imem_io.dat");
+        let archivo = Archivo::new("src/utilitis/archivos/imem_io.dat");
         let mut placa = PlacaARM::new();
         let instrucciones_bina = instrucciones_binarias::InstruccionBinaria::new();
-
-        let instrucciones_hex = archivo
+        let instrucciones_h = archivo
             .lectura_instrucciones()
             .expect("Error al leer instrucciones");
+        let mut pc = 0; // Inicializa el PC en 0
 
-        for instruccion_hex in instrucciones_hex {
-            let hex_string: String = instruccion_hex.iter().collect();
+        while pc < instrucciones_h.len() {
+            // Convierte cada instrucción de Vec<char> a String
+            let hex_string: String = instrucciones_h[pc].iter().collect();
+            // Convierte la cadena hexadecimal a una representación binaria
             let binario_str = self.hex_string_to_binary(&hex_string);
+            // Separa la cadena binaria en un vector de i32
             let bits = self.separar_binario_en_vector(&binario_str);
 
-            instrucciones_bina.llamado(&bits, &mut placa);
-            if let Some(pc) = placa.get_register(15) {
-                if pc >= instrucciones_hex.len() as u32 {
-                    break;
-                }
-            }
+            // Llama a llmado con el vector de bits
+            instrucciones_bina.llamado(&bits.iter().map(|&b| b as i32).collect::<Vec<i32>>(), &mut placa);
+            
+            // Actualiza el PC y almacena en R15
+            pc = placa.get_register(15).unwrap_or(0) as usize + 1;// Aumenta el PC por cada instrucción ejecutada
+            placa.set_register(15, pc as i32); // Guarda el nuevo valor del PC en R15
         }
     }
 
-    // Convierte un carácter hexadecimal a binario (4 bits)
+
+
+    fn hex_string_to_binary(&self, hex: &str) -> String {
+        hex.chars()
+            .map(|c| self.hex_char_to_binary(c))
+            .collect()
+    }
+
     fn hex_char_to_binary(&self, c: char) -> String {
         let num = c.to_digit(16).expect("Error al convertir carácter hexadecimal a decimal");
         format!("{:04b}", num)
     }
 
-    // Convierte una cadena hexadecimal completa en una cadena binaria
-    fn hex_string_to_binary(&self, hex: &str) -> String {
-        let mut binary_representation = String::new();
-        for c in hex.chars() {
-            let binary = self.hex_char_to_binary(c);
-            binary_representation.push_str(&binary);
-        }
-        binary_representation
-    }
-
-    // Separar la cadena binaria en bits y almacenarlos en un vector
-    fn separar_binario_en_vector(&self, cadena: &str) -> Vec<u32> {
+    fn separar_binario_en_vector(&self, cadena: &str) -> Vec<i32> {
         cadena.chars()
-            .filter_map(|c| c.to_digit(2))
+            .filter_map(|c| {
+                if c == '0' || c == '1' {
+                    Some(c.to_digit(2).unwrap() as i32)
+                } else {
+                    None
+                }
+            })
             .collect()
     }
 
-    // Método para extraer componentes
     fn extraer_componentes(&self, binario: &[u32]) -> (u32, u32, u32, u32, u32, u32) {
         if binario.len() < 32 {
             panic!("El vector binario debe contener al menos 32 bits.");
@@ -72,7 +75,8 @@ impl Traductor {
                         (binario[4] << 7) | (binario[5] << 6) | (binario[6] << 5) | (binario[7] << 4) |
                         (binario[8] << 3) | (binario[9] << 2) | (binario[10] << 1) | binario[11]; // bits 11-0
 
-        // Retornar los valores extraídos
-        (cond, i, opcode, rn, rd, operand2)
+        // Retornar los valores extraídos, conviertiendo a u32
+        (cond.try_into().unwrap(), i.try_into().unwrap(), opcode.try_into().unwrap(), rn.try_into().unwrap(), rd.try_into().unwrap(), operand2.try_into().unwrap())
     }
-} // Esta llave de cierre cierra la implementación de Traductor
+
+}
