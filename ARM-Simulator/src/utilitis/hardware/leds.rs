@@ -1,15 +1,23 @@
-use super::placa_arm::PlacaARM;
+use crate::utilitis::hardware::placa_arm::PlacaARM;
 
-pub struct Leds {}
+pub struct Leds {
+    leds: [bool; 8],
+}
 
 impl Leds {
     pub fn new() -> Self {
-        Leds {}
+        Leds {
+            leds: [false; 8],
+        }
     }
 
-    pub fn mostrar(&self, placa: &PlacaARM) {
-        for i in 0..placa.get_cantidad_leds() {
-            let estado = placa.get_led(i).unwrap_or(false);
+    pub fn mostrar(&mut self, valor: i32) {
+        // Convertir el valor a un número binario de 8 bits
+        let valor_binario = format!("{:08b}", valor & 0xFF); // Asegurarse de que sólo se usan los 8 bits menos significativos
+
+        for (i, bit) in valor_binario.chars().enumerate() {
+            let estado = bit == '1'; // Si el bit es 1, el LED debe estar encendido
+            self.leds[i] = estado;
             print!("({})", if estado { "o" } else { "-" });
         }
         println!();

@@ -1,6 +1,7 @@
 use std::{io::{self, Write}};
 use crate::utilitis::archivos::archivo::Archivo; // Asegúrate de importar correctamente Archivo
 use crate::utilitis::traduccion::traductor::Traductor;
+use crate::utilitis::hardware::placa_arm::PlacaARM;
 
 pub struct Menu {}
 
@@ -11,6 +12,7 @@ impl Menu {
 
     pub fn mostrar(&self) -> io::Result<()> {
         // Leer la elección del usuario
+        let mut placa = PlacaARM::new();
         let stdin = io::stdin();
         let mut archivo = Archivo::new("utilitis/archivos/archivo.txt");
         let mut instruccionM = Traductor::new();
@@ -54,7 +56,7 @@ impl Menu {
                             self.solicitar_y_escribir(&mut archivo, "Agregar");
                         }
                         4 => {
-                            instruccionM.convertir();
+                            instruccionM.convertir(&mut placa);
                         }
                         5 => {
                             println!("Saliendo...");

@@ -292,57 +292,77 @@ impl Operacion {
         println!("Interrupción de software ejecutada");
     }
 
-    pub fn bl(&mut self, placa: &mut PlacaARM, operand2: i32) {
+    pub fn bl(&mut self, placa: &mut PlacaARM, offset: i32) {
         // Obtener el valor del PC actual, o usar un valor por defecto en caso de None
-        let pc_actual = placa.get_register_memory(15).unwrap_or(0);
+        let pc_actual = placa.get_register(15).unwrap_or(0);
         
         // Almacenar la dirección de retorno en LR (R14), apuntando a la siguiente instrucción
         let lr = pc_actual.wrapping_add(4);
         placa.set_register(14, lr);
 
         // Calcular y establecer la nueva dirección en PC (R15)
-        let pc = pc_actual.wrapping_add(operand2); // Aquí, operand2 ya es i32
-        placa.set_register(15, pc); // Establecer el nuevo valor de PC
+        let pc = pc_actual.wrapping_add(offset); // Aquí, operand2 ya es i32
+        placa.set_register(15, offset); // Establecer el nuevo valor de PC
 
     }
 
     pub fn b(&self, placa: &mut PlacaARM, offset: i32) {
-            let pc = placa.get_register(15).unwrap_or(0);
-            placa.set_register(15, offset); // Ajustar PC con el offset
+        let pc = placa.get_register(15).unwrap_or(0);
+        // Calculamos la nueva dirección teniendo en cuenta que PC ya está en PC+8
+        let nueva_direccion = pc + offset - 8;
+        placa.set_register(15, nueva_direccion);
     }
 
-    pub fn str(&mut self, rd: usize, rn: usize, operand2: i32, placa: &mut PlacaARM) {
+    pub fn ldr(&self, placa: &mut PlacaARM, rd: i32, rn: i32, operand2: i32, es_inmediato: bool, bit_s: bool) {
         // Calcula la dirección como `rn + operand2`
-        if let Some(valor_rn) = placa.get_register(rn) {
-            let direccion = (valor_rn + operand2) as usize;
-            if let Some(valor_rd) = placa.get_register(rd) {
-                placa.set_memory(direccion, valor_rd);
-                //println!("Valor del registro R{} almacenado en la dirección: {}", rd, direccion);
-                 if operand2 == 800{
-                    let leds = leds::Leds::new();
-                    leds.mostrar(placa);
+        let direccion = if es_inmediato {
+            operand2 as usize  // Si es inmediato, operand2 es directamente la dirección
+        } else {
+            if let Some(valor_rn) = placa.get_register(rn.try_into().unwrap()) {
+                valor_rn as usize + operand2 as usize
+            } else {
+                println!("Error: Registro R{} fuera de rango", rn);
+                return;
+            }
+        };
+
+        // Obtener el valor de memoria y cargarlo en el registro
+        if let Some(valor_memoria) = placa.get_memory(direccion) {
+            placa.set_register(rd.try_into().unwrap(), valor_memoria);
+        } else {
+            println!("Error: Dirección de memoria fuera de rango: {}", direccion);
+        }
+    }
+
+    pub fn str(&self, placa: &mut PlacaARM, rd: i32, rn: i32, operand2: i32, es_inmediato: bool, bit_s: bool) {
+        // Calcula la dirección como rn + operand2
+        let direccion = if es_inmediato {
+            operand2 as usize // Si es inmediato, operand2 es directamente la dirección
+        } else {
+            match placa.get_register(rn.try_into().unwrap()) {
+                Some(valor_rn) => valor_rn as usize + operand2 as usize,
+                None => {
+                    println!("Error: Registro R{} fuera de rango", rn);
+                    return;
                 }
-            } else {
-                println!("Error: Registro R{} fuera de rango", rd);
             }
-        } else {
-            println!("Error: Registro R{} fuera de rango", rn);
+        };
+
+        // Obtener el valor de rd y almacenarlo en la dirección de memoria
+        match placa.get_register(rd.try_into().unwrap()) {
+            Some(valor_rd) => {
+                placa.set_memory(direccion, valor_rd);
+                
+                // Si la dirección es 0x800 (2048 en decimal), activar los LEDs
+                if operand2 == 0x800 {
+                    let mut leds = Leds::new();
+                    leds.mostrar(valor_rd); // Mostrar el valor del registro en los LEDs
+                }
+                
+                println!("STR R{}, [R{}, #0x{:X}] -> Almacenando valor {} en dirección 0x{:X}", 
+                        rd, rn, operand2, valor_rd, direccion);
+            },
+            None => println!("Error: Registro R{} fuera de rango", rd)
         }
     }
-
-    pub fn ldr(&mut self, rd: usize, rn: usize, operand2: i32, placa: &mut PlacaARM) {
-        // Calcula la dirección como `rn + operand2`
-        if let Some(valor_rn) = placa.get_register(rn) {
-            let direccion = (valor_rn + operand2) as usize;
-            if let Some(valor_memoria) = placa.get_memory(direccion) {
-                placa.set_register(rd, valor_memoria);
-                //println!("Valor cargado en R{} desde la dirección: {}", rd, direccion);
-            } else {
-                println!("Error: Dirección de memoria fuera de rango: {}", direccion);
-            }
-        } else {
-            println!("Error: Registro R{} fuera de rango", rn);
-        }
-    }
-
 }
