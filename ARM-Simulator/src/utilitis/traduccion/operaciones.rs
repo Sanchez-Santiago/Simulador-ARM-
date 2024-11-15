@@ -1,3 +1,7 @@
+use std::fs::File;
+use std::io::{self, BufRead};
+use std::path::Path;
+use std::str::FromStr;
 use crate::utilitis::hardware::{leds::{self, Leds}, placa_arm::PlacaARM};
 
 pub struct Operacion {}
@@ -307,16 +311,28 @@ impl Operacion {
     }
 
     pub fn b(&self, placa: &mut PlacaARM, offset: i32) {
-        let pc = placa.get_register(15).unwrap_or(0);
-        // Calculamos la nueva dirección teniendo en cuenta que PC ya está en PC+8
-        let nueva_direccion = pc + offset - 8;
-        placa.set_register(15, nueva_direccion);
+        if let Some(pc) = placa.get_register(15) {
+            // Para ARM, PC apunta a la instrucción actual + 8 bytes
+            let effective_pc = pc;// + 8;
+            
+            // El offset ya viene multiplicado por 4 del decodificador
+            // Calculamos la nueva dirección sumando el PC efectivo y el offset
+            let nueva_direccion = effective_pc + offset;
+            
+            // Actualizamos el PC con la nueva dirección
+            placa.set_register(15, nueva_direccion);
+            
+            //println!("Branch: PC={}, offset={}, nueva_direccion={}", pc, offset, nueva_direccion);
+        } else {
+            println!("Error: No se pudo obtener el valor del PC (R15)");
+        }
     }
 
-    pub fn ldr(&self, placa: &mut PlacaARM, rd: i32, rn: i32, operand2: i32, es_inmediato: bool, bit_s: bool) {
+
+   pub fn ldr(&self, placa: &mut PlacaARM, rd: i32, rn: i32, operand2: i32, es_inmediato: bool, bit_s: bool) {
         // Calcula la dirección como `rn + operand2`
         let direccion = if es_inmediato {
-            operand2 as usize  // Si es inmediato, operand2 es directamente la dirección
+            operand2 as usize
         } else {
             if let Some(valor_rn) = placa.get_register(rn.try_into().unwrap()) {
                 valor_rn as usize + operand2 as usize
@@ -326,12 +342,72 @@ impl Operacion {
             }
         };
 
-        // Obtener el valor de memoria y cargarlo en el registro
-        if let Some(valor_memoria) = placa.get_memory(direccion) {
-            placa.set_register(rd.try_into().unwrap(), valor_memoria);
+        // Manejo especial para la dirección 0x800 (lectura de entradas desde teclado)
+        if direccion == 0x800 {
+            let valor_binario = self.simular_entradas_teclado(); // Simulando las entradas desde el teclado
+            placa.set_register(rd.try_into().unwrap(), valor_binario);
+            println!("LDR R{}, [R{}, #0x800] -> Leyendo entradas: {:06b}", rd, rn, valor_binario);
         } else {
-            println!("Error: Dirección de memoria fuera de rango: {}", direccion);
+            // Leer del archivo dmem_io.dat
+            let valor = self.leer_dmem_io(direccion / 4); // Dividimos por 4 para obtener la línea correcta
+            match valor {
+                Ok(v) => {
+                    placa.set_register(rd.try_into().unwrap(), v);
+                    println!("LDR R{}, [R{}, #0x{:X}] -> Leyendo valor {} de dmem_io.dat", rd, rn, operand2, v);
+                }
+                Err(e) => {
+                    println!("Error al leer dmem_io.dat: {}", e);
+                }
+            }
         }
+    }
+
+    fn simular_entradas_teclado(&self) -> i32 {
+        // Simula las entradas de la placa leyendo los primeros 6 números del teclado
+        println!("Simulando las 6 entradas (presiona 6 números):");
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("Error al leer la entrada");
+
+        // Leer los primeros 6 números como un valor binario
+        let mut valor_binario = 0;
+        for (i, c) in input.trim().chars().take(6).enumerate() {
+            if let Some(digit) = c.to_digit(10) {
+                if digit > 1 {
+                    println!("Error: Solo se permiten los números 0 o 1.");
+                    return 0;
+                }
+                valor_binario |= (digit as i32) << (5 - i); // Construir el valor binario
+            } else {
+                println!("Error: Entrada no válida, se esperaba un número binario.");
+                return 0;
+            }
+        }
+
+        valor_binario
+    }
+
+    fn leer_dmem_io(&self, linea: usize) -> io::Result<i32> {
+        let path = Path::new("src/utilitis/archivos/dmem_io.dat");
+        let file = File::open(path)?;
+        let reader = io::BufReader::new(file);
+
+        for (index, line) in reader.lines().enumerate() {
+            if index == linea {
+                let line = line?;
+                // Convertir de hexadecimal a decimal
+                let valor = i32::from_str_radix(line.trim(), 16)
+                    .unwrap_or_else(|_| {
+                        println!("Error al convertir el valor hexadecimal: {}", line);
+                        0
+                    });
+                return Ok(valor);
+            }
+        }
+        
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("Línea {} no encontrada en dmem_io.dat", linea)
+        ))
     }
 
     pub fn str(&self, placa: &mut PlacaARM, rd: i32, rn: i32, operand2: i32, es_inmediato: bool, bit_s: bool) {

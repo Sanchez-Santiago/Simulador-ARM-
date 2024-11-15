@@ -9,7 +9,7 @@ impl Traductor {
         Traductor {}
     }
 
-    pub fn convertir(&self, placa: &mut PlacaARM) {
+       pub fn convertir(&self, placa: &mut PlacaARM) {
         let archivo = Archivo::new("src/utilitis/archivos/imem_io.dat");
         let instrucciones_bina = instrucciones_binarias::InstruccionBinaria::new();
         
@@ -21,26 +21,36 @@ impl Traductor {
             }
         };
 
-        let mut pc = 0; // Inicializa el PC en 0
+        // Inicializamos el PC como i32
+        let mut pc: i32 = 0;
+        placa.set_register(15, pc);
 
-        while (pc / 4) < instrucciones_h.len() {
-            if pc >= instrucciones_h.len() * 4 {
-                break; // Sale del bucle si el PC es mayor que la última posición válida
-            }
+        while (pc / 4) < instrucciones_h.len().try_into().unwrap() {
+            // Convertimos el PC a usize para acceder al array
+            let current_pc = pc as usize;
             
-            // Convierte cada instrucción de Vec<char> a String
-            let hex_string: String = instrucciones_h[pc / 4].iter().collect();
-            // Convierte la cadena hexadecimal a una representación binaria
+            // Convierte la instrucción actual
+            let hex_string: String = instrucciones_h[current_pc / 4].iter().collect();
             let binario_str = self.hex_string_to_binary(&hex_string);
-            // Separa la cadena binaria en un vector de i32
             let bits = self.separar_binario_en_vector(&binario_str);
 
-            // Llama a llmado con el vector de bits
-            instrucciones_bina.llamado(&bits.iter().map(|&b| b as i32).collect::<Vec<i32>>(), placa);
-            
-            // Actualiza el PC y almacena en R15
-            pc = placa.get_register(15).unwrap_or(0) as usize + 4; // Aumenta el PC por cada instrucción ejecutada
-            placa.set_register(15, pc as i32); // Guarda el nuevo valor del PC en R15
+            // Incrementamos el PC antes de ejecutar la instrucción
+            pc += 4;
+            placa.set_register(15, pc); // PC+8 desde la perspectiva de la instrucción actual
+
+            // Ejecutamos la instrucción
+            instrucciones_bina.llamado(
+                &bits.iter().map(|&b| b as i32).collect::<Vec<i32>>(),
+                placa
+            );
+
+            // Obtenemos el nuevo PC después de la ejecución
+            pc = placa.get_register(15).unwrap_or(pc);
+
+            // Verificación de seguridad para evitar bucles infinitos
+            if pc >= (instrucciones_h.len() as i32 * 4) {
+                break;
+            }
         }
     }
 
