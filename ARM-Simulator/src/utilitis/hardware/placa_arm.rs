@@ -6,6 +6,11 @@ pub struct PlacaARM {
     flags: [bool; 4],             // Array de 4 banderas
     memoria: Vec<i32>,            // Memoria dinámica de 2 MB
 }
+// flags:
+// 0	V	Desbordamiento aritmético
+// 1	C	Acarreo o préstamo
+// 2	Z	Resultado igual a cero
+// 3	N	Resultado negativo
 
 impl PlacaARM {
     pub fn new() -> Self {

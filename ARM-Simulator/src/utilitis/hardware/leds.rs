@@ -18,7 +18,7 @@ impl Leds {
         for (i, bit) in valor_binario.chars().enumerate() {
             let estado = bit == '1'; // Si el bit es 1, el LED debe estar encendido
             self.leds[i] = estado;
-            print!("({})", if estado { "o" } else { "-" });
+            print!("({})", if estado { "o" } else { " " });
         }
         println!();
     }

@@ -17,7 +17,7 @@ impl InstruccionBinaria {
         let cond = &array_bits[0..4];  // Condition field (31-28)
         let op_type = &array_bits[4..6];  // bits [27:26]
         let is_immediate = array_bits[6];  // bit 25
-        let s_bit = array_bits[24];        // bit 7
+        let s_bit = array_bits[11];        // bit 7
         let opcode = &array_bits[7..11];   // bits [24:21]
         
         // Extraer registros y operando
@@ -62,7 +62,7 @@ impl InstruccionBinaria {
             // Branch (10)
             [1, 0] => {
                 let offset = self.calculate_branch_offset(array_bits);
-                println!("offset: {offset}");
+                //println!("offset: {offset}");
                 
                 // Verificar la condición del branch
                 match cond {
@@ -72,13 +72,13 @@ impl InstruccionBinaria {
                     },
                     // 0000 - EQ (Equal, Z set)
                     [0, 0, 0, 0] => {
-                        match placa.get_flag(0) {  // Se pasa el índice adecuado de la bandera
+                        match placa.get_flag(2) {  // Se pasa el índice adecuado de la bandera
                             Some(flag) => {
                                 if flag {
-                                    println!("BEQ tomado (Z=1)");
+                                    //println!("BEQ tomado (Z=1)");
                                     operacion.b(placa, offset);
                                 } else {
-                                    println!("BEQ no tomado (Z=0)");
+                                    //println!("BEQ no tomado (Z=0)");
                                     // No realizar el salto, continuar con la siguiente instrucción
                                 }
                             }
@@ -90,13 +90,13 @@ impl InstruccionBinaria {
                     },
                     // 0001 - NE (Not Equal, Z clear)
                     [0, 0, 0, 1] => {
-                        match placa.get_flag(0) {  // Se pasa el índice adecuado de la bandera
+                        match placa.get_flag(2) {  // Se pasa el índice adecuado de la bandera
                             Some(flag) => {
                                 if !flag {
-                                    println!("BNE tomado (Z=0)");
+                                    //println!("BNE tomado (Z=0)");
                                     operacion.b(placa, offset);
                                 } else {
-                                    println!("BNE no tomado (Z=1)");
+                                    //println!("BNE no tomado (Z=1)");
                                     // No realizar el salto, continuar con la siguiente instrucción
                                 }
                             }

@@ -34,16 +34,11 @@ impl Traductor {
             let binario_str = self.hex_string_to_binary(&hex_string);
             let bits = self.separar_binario_en_vector(&binario_str);
 
-            // Incrementamos el PC antes de ejecutar la instrucción
-            pc += 4;
-            placa.set_register(15, pc); // PC+8 desde la perspectiva de la instrucción actual
-
             // Ejecutamos la instrucción
             instrucciones_bina.llamado(
                 &bits.iter().map(|&b| b as i32).collect::<Vec<i32>>(),
                 placa
             );
-
             // Obtenemos el nuevo PC después de la ejecución
             pc = placa.get_register(15).unwrap_or(pc);
 
@@ -51,6 +46,10 @@ impl Traductor {
             if pc >= (instrucciones_h.len() as i32 * 4) {
                 break;
             }
+            // Incrementamos el PC antes de ejecutar la instrucción
+            pc += 4;
+            placa.set_register(15, pc); // PC+8 desde la perspectiva de la instrucción actual
+
         }
     }
 

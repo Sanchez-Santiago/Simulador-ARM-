@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use std::str::FromStr;
 use crate::utilitis::hardware::{leds::{self, Leds}, placa_arm::PlacaARM};
 
 pub struct Operacion {}
@@ -13,8 +12,8 @@ impl Operacion {
 
     // Función que establece las banderas Z, N, C y V en la placa
     fn set_flags(&self, placa: &mut PlacaARM, resultado: i32) {
-        placa.set_flag(1, resultado == 0); // Bandera Z
-        placa.set_flag(0, resultado < 0);  // Bandera N
+        placa.set_flag(2, resultado == 0); // Bandera Z
+        placa.set_flag(3, resultado < 0);  // Bandera N
     }
 
     pub fn operar(
@@ -51,24 +50,24 @@ impl Operacion {
                 // Manejar Carry (C) y Overflow (V)
                 if es_suma {
                     let (_, carry) = (valor_x as u32).overflowing_add(valor_z as u32);
-                    placa.set_flag(2, carry); // Bandera C
+                    placa.set_flag(1, carry); // Bandera C
                     
                     // Determinar Overflow (V) para suma
                     let overflow = (valor_x > 0 && valor_z > 0 && resultado < 0) || 
                                    (valor_x < 0 && valor_z < 0 && resultado > 0);
-                    placa.set_flag(3, overflow); // Bandera V
+                    placa.set_flag(0, overflow); // Bandera V
                 } else if es_resta {
                     let (_, carry) = (valor_x as u32).overflowing_sub(valor_z as u32);
-                    placa.set_flag(2, carry); // Bandera C
+                    placa.set_flag(1, carry); // Bandera C
                     
                     // Determinar Overflow (V) para resta
                     let overflow = (valor_x < 0 && valor_z > 0 && resultado > 0) || 
                                    (valor_x > 0 && valor_z < 0 && resultado < 0);
-                    placa.set_flag(3, overflow); // Bandera V
+                    placa.set_flag(0, overflow); // Bandera V
                 } else {
                     // Para otras operaciones lógicas
-                    placa.set_flag(2, false);  // Bandera C
-                    placa.set_flag(3, false);  // Bandera V
+                    placa.set_flag(1, false);  // Bandera C
+                    placa.set_flag(0, false);  // Bandera V
                 }
             }
         } else {
@@ -317,7 +316,7 @@ impl Operacion {
             
             // El offset ya viene multiplicado por 4 del decodificador
             // Calculamos la nueva dirección sumando el PC efectivo y el offset
-            let nueva_direccion = effective_pc + offset;
+            let nueva_direccion = effective_pc + offset + 4;
             
             // Actualizamos el PC con la nueva dirección
             placa.set_register(15, nueva_direccion);
@@ -346,14 +345,14 @@ impl Operacion {
         if direccion == 0x800 {
             let valor_binario = self.simular_entradas_teclado(); // Simulando las entradas desde el teclado
             placa.set_register(rd.try_into().unwrap(), valor_binario);
-            println!("LDR R{}, [R{}, #0x800] -> Leyendo entradas: {:06b}", rd, rn, valor_binario);
+            //println!("LDR R{}, [R{}, #0x800] -> Leyendo entradas: {:06b}", rd, rn, valor_binario);
         } else {
             // Leer del archivo dmem_io.dat
             let valor = self.leer_dmem_io(direccion / 4); // Dividimos por 4 para obtener la línea correcta
             match valor {
                 Ok(v) => {
                     placa.set_register(rd.try_into().unwrap(), v);
-                    println!("LDR R{}, [R{}, #0x{:X}] -> Leyendo valor {} de dmem_io.dat", rd, rn, operand2, v);
+                    //println!("LDR R{}, [R{}, #0x{:X}] -> Leyendo valor {} de dmem_io.dat", rd, rn, operand2, v);
                 }
                 Err(e) => {
                     println!("Error al leer dmem_io.dat: {}", e);
@@ -435,8 +434,7 @@ impl Operacion {
                     leds.mostrar(valor_rd); // Mostrar el valor del registro en los LEDs
                 }
                 
-                println!("STR R{}, [R{}, #0x{:X}] -> Almacenando valor {} en dirección 0x{:X}", 
-                        rd, rn, operand2, valor_rd, direccion);
+                //println!("STR R{}, [R{}, #0x{:X}] -> Almacenando valor {} en dirección 0x{:X}", rd, rn, operand2, valor_rd, direccion);
             },
             None => println!("Error: Registro R{} fuera de rango", rd)
         }
