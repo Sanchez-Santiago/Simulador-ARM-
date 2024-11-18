@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use std::fs::OpenOptions;
+use std::io::Write;
 use crate::utilitis::hardware::{leds::{self, Leds}, placa_arm::PlacaARM};
 
 pub struct Operacion {}
@@ -410,7 +412,7 @@ impl Operacion {
     }
 
     pub fn str(&self, placa: &mut PlacaARM, rd: i32, rn: i32, operand2: i32, es_inmediato: bool, bit_s: bool) {
-        // Calcula la dirección como rn + operand2
+        // Calcula la dirección como `rn + operand2`
         let direccion = if es_inmediato {
             operand2 as usize // Si es inmediato, operand2 es directamente la dirección
         } else {
@@ -423,20 +425,49 @@ impl Operacion {
             }
         };
 
-        // Obtener el valor de rd y almacenarlo en la dirección de memoria
+        // Obtener el valor de `rd` y almacenarlo en la dirección de memoria
         match placa.get_register(rd.try_into().unwrap()) {
             Some(valor_rd) => {
-                placa.set_memory(direccion, valor_rd);
-                
-                // Si la dirección es 0x800 (2048 en decimal), activar los LEDs
-                if operand2 == 0x800 {
+                if direccion == 0x800 {
+                    // Activar los LEDs para la dirección especial 0x800
                     let mut leds = Leds::new();
-                    leds.mostrar(valor_rd); // Mostrar el valor del registro en los LEDs
+                    leds.mostrar(valor_rd);
+                } else {
+                    // Escribir en el archivo `dmem_io.dat`
+                    if let Err(e) = self.escribir_en_archivo(direccion / 4, valor_rd) {
+                        println!("Error al escribir en dmem_io.dat: {}", e);
+                    }
                 }
-                
-                //println!("STR R{}, [R{}, #0x{:X}] -> Almacenando valor {} en dirección 0x{:X}", rd, rn, operand2, valor_rd, direccion);
-            },
-            None => println!("Error: Registro R{} fuera de rango", rd)
+            }
+            None => println!("Error: Registro R{} fuera de rango", rd),
         }
+    }
+
+    /// Escribir un valor en la línea correspondiente de `dmem_io.dat`.
+    fn escribir_en_archivo(&self, linea: usize, valor: i32) -> io::Result<()> {
+        let path = "src/utilitis/archivos/dmem_io.dat";
+        let mut file = OpenOptions::new().read(true).write(true).open(path)?;
+
+        // Leer todas las líneas del archivo
+        let mut lines: Vec<String> = io::BufReader::new(&file)
+            .lines()
+            .collect::<Result<_, _>>()?;
+
+        // Asegurar que el archivo tiene suficiente espacio para la línea
+        if linea >= lines.len() {
+            lines.resize(linea + 1, "00000000".to_string());
+        }
+
+        // Actualizar la línea correspondiente con el nuevo valor
+        lines[linea] = format!("{:08X}", valor);
+
+        // Reescribir el archivo completo con las líneas actualizadas
+        file.set_len(0)?; // Vaciar el archivo
+        let mut writer = io::BufWriter::new(file);
+        for line in lines {
+            writeln!(writer, "{}", line)?;
+        }
+
+        Ok(())
     }
 }
