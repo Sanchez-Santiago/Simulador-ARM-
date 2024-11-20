@@ -312,23 +312,29 @@ impl Operacion {
     }
 
     pub fn b(&self, placa: &mut PlacaARM, offset: i32) {
-        if let Some(pc) = placa.get_register(15) {
-            // Para ARM, PC apunta a la instrucción actual + 8 bytes
-            let effective_pc = pc;// + 8;
-            
-            // El offset ya viene multiplicado por 4 del decodificador
-            // Calculamos la nueva dirección sumando el PC efectivo y el offset
-            let nueva_direccion = effective_pc + offset + 4;
-            
-            // Actualizamos el PC con la nueva dirección
-            placa.set_register(15, nueva_direccion);
-            
-            //println!("Branch: PC={}, offset={}, nueva_direccion={}", pc, offset, nueva_direccion);
+        if let Some(pc_plus_8) = placa.get_register(15) {
+            // PC+8 es el valor actual de R15
+            // Restamos 8 para obtener la dirección de la instrucción actual
+            let effective_pc = pc_plus_8 - 8;
+
+            // Calculamos la nueva dirección: dirección actual + offset (offset ya está multiplicado por 4)
+            let nueva_direccion = effective_pc + offset;
+
+            // Validamos que la nueva dirección sea múltiplo de 4
+            if nueva_direccion % 4 != 0 {
+                eprintln!(
+                    "Error: Dirección no alineada después del salto (0x{:08X}).",
+                    nueva_direccion
+                );
+                return;
+            }
+
+            // Actualizamos el PC (R15) con la nueva dirección
+            placa.set_register(15, nueva_direccion + 8); // Guardamos PC+8 como indica ARM
         } else {
-            println!("Error: No se pudo obtener el valor del PC (R15)");
+            eprintln!("Error: No se pudo obtener el valor del PC (R15).");
         }
     }
-
 
    pub fn ldr(&self, placa: &mut PlacaARM, rd: i32, rn: i32, operand2: i32, es_inmediato: bool, bit_s: bool) {
         // Calcula la dirección como `rn + operand2`
