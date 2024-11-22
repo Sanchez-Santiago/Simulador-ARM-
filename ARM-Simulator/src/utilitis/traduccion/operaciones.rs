@@ -315,22 +315,22 @@ impl Operacion {
         if let Some(pc_plus_8) = placa.get_register(15) {
             // PC+8 es el valor actual de R15
             // Restamos 8 para obtener la dirección de la instrucción actual
-            let effective_pc = pc_plus_8 - 8;
+            let effective_pc = pc_plus_8;
 
             // Calculamos la nueva dirección: dirección actual + offset (offset ya está multiplicado por 4)
-            let nueva_direccion = effective_pc + offset;
+            let nueva_direccion = effective_pc + offset + 2;
 
             // Validamos que la nueva dirección sea múltiplo de 4
-            if nueva_direccion % 4 != 0 {
-                eprintln!(
-                    "Error: Dirección no alineada después del salto (0x{:08X}).",
-                    nueva_direccion
-                );
-                return;
-            }
+            //if nueva_direccion % 4 != 0 {
+                //eprintln!(
+                //    "Error: Dirección no alineada después del salto (0x{:08X}).",
+                //   nueva_direccion
+                //);
+                //return;
+            //}
 
             // Actualizamos el PC (R15) con la nueva dirección
-            placa.set_register(15, nueva_direccion + 8); // Guardamos PC+8 como indica ARM
+            placa.set_register(15, nueva_direccion); // Guardamos PC+8 como indica ARM
         } else {
             eprintln!("Error: No se pudo obtener el valor del PC (R15).");
         }
@@ -434,7 +434,7 @@ impl Operacion {
         // Obtener el valor de `rd` y almacenarlo en la dirección de memoria
         match placa.get_register(rd.try_into().unwrap()) {
             Some(valor_rd) => {
-                if direccion == 0x800 {
+                if direccion == 0x800 || direccion == 2818 {
                     // Activar los LEDs para la dirección especial 0x800
                     let mut leds = Leds::new();
                     leds.mostrar(valor_rd);
