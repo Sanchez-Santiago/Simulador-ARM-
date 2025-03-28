@@ -1,4 +1,3 @@
-```markdown
 # Simulador ARM en Rust
 
 ## Descripción
@@ -25,7 +24,7 @@ El simulador opera en varias capas:
 1. Clona el repositorio:
    ```bash
    git clone https://github.com/tu_usuario/simulador-arm.git
-   ```
+
 2. Entra en el directorio del proyecto:
    ```bash
    cd simulador-arm
